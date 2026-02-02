@@ -146,15 +146,15 @@ Sixth_Sense/
 
 ##  Hackathon Alignment Checklist
 
-| Requirement | Implementation | Status |
-|-------------|---------------|--|
-| Personalized Player Insights | KAST-style analysis, Data→Insight format |  |
-| Team Improvement Insights | Death patterns, matchup analysis |  |
-| Automated Macro Game Review | Round analysis, first blood impact |  |
-| Predict "What-If" Scenarios | 5 data-backed prediction scenarios |  |
-| GRID Data Integration | Download, process, visualize pipeline |  |
-| Provide Data/Reasoning | Every insight shows supporting data |  |
+| Requirement | Implementation |
+|-------------|---------------|
+| Personalized Player Insights | KAST-style analysis, Data→Insight format |
+| Team Improvement Insights | Death patterns, matchup analysis | 
+| Automated Macro Game Review | Round analysis, first blood impact |  
+| Predict "What-If" Scenarios | 5 data-backed prediction scenarios |  
+| GRID Data Integration | Download, process, visualize pipeline |  
+| Provide Data/Reasoning | Every insight shows supporting data |  
 
 ---
 
-*Developed for the Cloud9 x JetBrains Hackathon 2025*
+*Developed for the Cloud9 x JetBrains Hackathon 2026*
