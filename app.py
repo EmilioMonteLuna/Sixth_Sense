@@ -10,10 +10,10 @@ from sklearn.cluster import DBSCAN
 st.set_page_config(layout="wide", page_title="Sixth Sense: Comprehensive Assistant Coach")
 
 st.title("Sixth Sense: Comprehensive Assistant Coach")
-st.markdown("### 🎯 Advanced Performance Analysis & Strategic Insights")
+st.markdown("### Advanced Performance Analysis & Strategic Insights")
 
 # App description and instructions
-with st.expander("ℹ️ About this App", expanded=False):
+with st.expander("About this App", expanded=False):
     st.markdown("""
     ## Welcome to Sixth Sense
 
@@ -510,6 +510,12 @@ map_padding = st.sidebar.slider(
     help="Higher values show more of the map around data points. Adjust to ensure all points fit."
 )
 
+# NEW: Orientation/transform toggles to correct misalignment
+flip_x = st.sidebar.checkbox("Flip X axis (mirror)", value=False, help="Use if points appear horizontally mirrored.")
+flip_y = st.sidebar.checkbox("Flip Y axis (invert)", value=True, help="Use if points appear vertically flipped.")
+swap_xy = st.sidebar.checkbox("Swap X and Y", value=False, help="Use if points are rotated 90°.")
+show_image_bounds = st.sidebar.checkbox("Show Image Bounds Overlay", value=False, help="Draws a rectangle of the map image area for verification.")
+
 if use_auto_calib:
     # Calculate bounds based on the filtered data
     data_to_use = pd.concat([player_kills, player_deaths]).drop_duplicates()
@@ -521,31 +527,16 @@ if use_auto_calib:
     st.sidebar.text(f"Center X: {auto_bounds['off_x']:.1f}")
     st.sidebar.text(f"Center Y: {auto_bounds['off_y']:.1f}")
 
-    # Add explanation about the ML approach
-    with st.sidebar.expander("ℹ️ About Map Calibration", expanded=False):
-        st.markdown("""
-        ### Smart Map Calibration
-
-        This app uses machine learning (DBSCAN clustering) to ensure all points fit properly on the map:
-
-        1. **Outlier Detection**: Identifies extreme points that might skew the map scaling
-        2. **Adaptive Scaling**: Calculates optimal map bounds based on point distribution
-        3. **Padding Control**: Use the slider above to adjust how much map is shown around points
-
-        If points appear too close to the edge of the map, try increasing the padding percentage.
-        """)
-
-    # Use the auto-calculated bounds - use BOTH X and Y from auto calculation
+    # Use the auto-calculated bounds
     map_size = auto_bounds["scale"]
     map_x = auto_bounds["off_x"]
-    map_y = auto_bounds["off_y"]  # Use auto-calculated Y offset instead of hardcoded value
+    map_y = auto_bounds["off_y"]
 
     # Option to show manual calibration tools
     show_calib = st.sidebar.checkbox("Override with Manual Calibration", value=False)
 
     if show_calib:
         st.sidebar.markdown(f"**Manual Adjustments for: {selected_map_name}**")
-        # We use 100.0 (float) for step to avoid the "Mixed Type" error
         map_size = st.sidebar.number_input("Map Scale", value=float(map_size), step=500.0)
         map_x = st.sidebar.number_input("Map X Offset", value=float(map_x), step=100.0)
         map_y = st.sidebar.number_input("Map Y Offset", value=float(map_y), step=100.0)
@@ -553,7 +544,6 @@ else:
     # Manual calibration only
     show_calib = True
     st.sidebar.markdown(f"**Manual Calibration for: {selected_map_name}**")
-    # We use 100.0 (float) for step to avoid the "Mixed Type" error
     map_size = st.sidebar.number_input("Map Scale", value=float(current_map_config["scale"]), step=500.0)
     map_x = st.sidebar.number_input("Map X Offset", value=float(current_map_config["off_x"]), step=100.0)
     map_y = st.sidebar.number_input("Map Y Offset", value=float(current_map_config["off_y"]), step=100.0)
@@ -575,7 +565,7 @@ with st.sidebar.expander("📍 Data Coordinate Bounds", expanded=False):
     
     **Current Scale:** {map_size:.0f}
     
-    *If points don't align with the map, adjust the X/Y offset and scale in Manual Calibration.*
+    *If points don't align with the map, adjust offsets or try Flip/Swap toggles above.*
     """)
 
 # --- DEATH TRAP ANALYSIS SETTINGS ---
@@ -620,18 +610,52 @@ def draw_map(data, x_col, y_col, color_col, title, show_clusters=True, cluster_e
         st.warning("No data for this selection.")
         return
 
+    # Apply orientation transforms non-destructively
+    plot_df = data.copy()
+    x_series = plot_df[x_col]
+    y_series = plot_df[y_col]
+    if swap_xy:
+        plot_df['_plot_x'] = y_series
+        plot_df['_plot_y'] = x_series
+    else:
+        plot_df['_plot_x'] = x_series
+        plot_df['_plot_y'] = y_series
+
+    if flip_x:
+        plot_df['_plot_x'] = -plot_df['_plot_x']
+    if flip_y:
+        plot_df['_plot_y'] = -plot_df['_plot_y']
+
+    # Calculate bounds from TRANSFORMED coordinates to ensure map covers all points
+    plot_x_vals = plot_df['_plot_x'].dropna().values
+    plot_y_vals = plot_df['_plot_y'].dropna().values
+
+    if len(plot_x_vals) > 0 and len(plot_y_vals) > 0:
+        data_min_x, data_max_x = np.min(plot_x_vals), np.max(plot_x_vals)
+        data_min_y, data_max_y = np.min(plot_y_vals), np.max(plot_y_vals)
+        data_center_x = (data_min_x + data_max_x) / 2
+        data_center_y = (data_min_y + data_max_y) / 2
+        data_range_x = data_max_x - data_min_x
+        data_range_y = data_max_y - data_min_y
+        # Use the larger range to keep aspect ratio square, add padding
+        padding_factor = 1 + (map_padding / 100)
+        data_range = max(data_range_x, data_range_y) * padding_factor
+    else:
+        data_center_x, data_center_y = map_x, map_y
+        data_range = map_size
+
     # Plot the Dots
     fig = px.scatter(
-        data,
-        x=x_col,
-        y=y_col,
+        plot_df,
+        x='_plot_x',
+        y='_plot_y',
         color=color_col,
         hover_data=['timestamp', 'killer_name', 'victim_name'],
         title=title,
         width=800,
         height=800,
         opacity=1.0,
-        size=[10] * len(data),
+        size=[10] * len(plot_df),
         size_max=12,
         symbol_sequence=['circle'],
         color_discrete_sequence=px.colors.qualitative.Bold
@@ -642,45 +666,51 @@ def draw_map(data, x_col, y_col, color_col, title, show_clusters=True, cluster_e
     if os.path.exists(map_img_path):
         img = Image.open(map_img_path)
 
-        # Calculate map boundaries - center on the data
-        half_size = map_size / 2
+        # Use transformed data bounds to position image so it covers ALL points
+        half_size = data_range / 2
 
-        # In Plotly, for add_layout_image:
-        # - x: left edge of image
-        # - y: TOP edge of image (not bottom!)
-        # - sizex: width extending RIGHT
-        # - sizey: height extending DOWN (negative y direction)
         fig.add_layout_image(
             dict(
                 source=img,
                 xref="x",
                 yref="y",
-                x=map_x - half_size,      # Left edge of map
-                y=map_y + half_size,      # TOP edge of map (center + half)
-                sizex=map_size,           # Width extending right
-                sizey=map_size,           # Height extending down
+                x=data_center_x - half_size,
+                y=data_center_y + half_size,  # TOP edge
+                sizex=data_range,
+                sizey=data_range,
                 sizing="stretch",
                 opacity=0.7,
                 layer="below"
             )
         )
 
-        # Set axis ranges centered on map_x, map_y
-        fig.update_xaxes(range=[map_x - half_size, map_x + half_size], showgrid=False)
-        fig.update_yaxes(range=[map_y - half_size, map_y + half_size], showgrid=False)
+        # Optional: draw rectangle of image bounds for verification
+        if show_image_bounds:
+            fig.add_shape(
+                type="rect",
+                xref="x",
+                yref="y",
+                x0=data_center_x - half_size,
+                y0=data_center_y - half_size,
+                x1=data_center_x + half_size,
+                y1=data_center_y + half_size,
+                line=dict(color="cyan", width=2, dash="dot"),
+                fillcolor="rgba(0,0,0,0)"
+            )
+
+        # Set axis ranges centered on transformed data
+        fig.update_xaxes(range=[data_center_x - half_size, data_center_x + half_size], showgrid=False)
+        fig.update_yaxes(range=[data_center_y - half_size, data_center_y + half_size], showgrid=False)
     else:
         st.warning(f"⚠️ Image not found at: {map_img_path}")
 
     # --- ADD DEATH CLUSTERS ---
-    if show_clusters and title.lower().find("death") >= 0:  # Only show clusters on death maps
-        clusters = find_death_clusters(data, x_col, y_col, eps=cluster_eps, min_samples=cluster_min_samples)
+    if show_clusters and title.lower().find("death") >= 0:
+        # Use transformed columns for clustering consistency
+        clusters = find_death_clusters(plot_df.rename(columns={'_plot_x': 'x', '_plot_y': 'y'}), 'x', 'y', eps=cluster_eps, min_samples=cluster_min_samples)
 
-        # Limit to top N clusters (already sorted by count descending)
         clusters_to_show = clusters[:max_clusters]
-
-        # Add circles for each cluster
         for i, cluster in enumerate(clusters_to_show):
-            # Add a circle to highlight the cluster
             fig.add_shape(
                 type="circle",
                 xref="x",
@@ -693,8 +723,6 @@ def draw_map(data, x_col, y_col, color_col, title, show_clusters=True, cluster_e
                 fillcolor="rgba(255, 0, 0, 0.15)",
                 name=f"Death Trap {i+1}"
             )
-
-            # Add a label for the cluster (only for top clusters to reduce clutter)
             fig.add_annotation(
                 x=cluster["center_x"],
                 y=cluster["center_y"],
@@ -706,7 +734,6 @@ def draw_map(data, x_col, y_col, color_col, title, show_clusters=True, cluster_e
                 opacity=0.9
             )
 
-    # Y-axis reversal is handled in update_yaxes above (range is already reversed)
     fig.update_layout(
         template="plotly_dark",
         margin=dict(l=20, r=20, t=40, b=20),
@@ -720,13 +747,11 @@ def draw_map(data, x_col, y_col, color_col, title, show_clusters=True, cluster_e
 
     # Display cluster information if available (limited to top clusters)
     if show_clusters and title.lower().find("death") >= 0:
-        clusters = find_death_clusters(data, x_col, y_col, eps=cluster_eps, min_samples=cluster_min_samples)
+        clusters = find_death_clusters(plot_df.rename(columns={'_plot_x': 'x', '_plot_y': 'y'}), 'x', 'y', eps=cluster_eps, min_samples=cluster_min_samples)
         if clusters:
             st.markdown(f"### 💀 Top {min(max_clusters, len(clusters))} Death Traps")
             for i, cluster in enumerate(clusters[:max_clusters]):
-                st.markdown(f"""
-                **Death Trap #{i+1}:** {cluster['count']} deaths (radius: {cluster['radius']:.0f})
-                """)
+                st.markdown(f"\n**Death Trap #{i+1}:** {cluster['count']} deaths (radius: {cluster['radius']:.0f})")
             if len(clusters) > max_clusters:
                 st.caption(f"*{len(clusters) - max_clusters} additional smaller clusters not shown. Adjust sidebar settings to see more.*")
         else:

@@ -8,17 +8,17 @@ Sixth Sense is a data-driven assistant coach for VALORANT that provides **person
 
 ---
 
-## ⚡ Key Features (Matching Hackathon Criteria)
+## ⚡ Key Features
 
 ### 1. Personalized Player/Team Improvement Insights
 
-**Example Output (matching hackathon format):**
+**Example Output:**
 
-> **DATA:** Team loses approximately **78%** of rounds when **OXY** dies first (without KAST)
+> **DATA:** Team loses approximately **78%** of rounds when **f0rsakeN** dies first (without KAST)
 >
-> **INSIGHT:** Player OXY's opening duel success rate heavily impacts the team. They died first in 23 rounds, potentially costing ~18 rounds.
+> **INSIGHT:** f0rsakeN's opening duel success rate heavily impacts the team. They died first in 8 rounds, potentially costing ~6 rounds.
 >
-> **RECOMMENDATION:** Review OXY's opening pathing and ensure trade support is always available.
+> **RECOMMENDATION:** Review f0rsakeN's opening pathing and ensure trade support is always available.
 
 ### 2.  Automated Macro Game Review
 
@@ -57,23 +57,51 @@ Unlike typical analytics tools, Sixth Sense provides **spatial visualization** o
 
 ##  Quick Start
 
+### Step 1: Install Dependencies
 ```bash
-# 1. Install dependencies
+# Create virtual environment (recommended)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1  # Windows PowerShell
+
+# Install required packages
 pip install -r requirements.txt
+```
 
-# 2. Download match data from GRID
+### Step 2: Get Match Data (Optional - sample data included)
+```bash
+# Set your GRID API key
+$env:GRID_API_KEY="<your_key>"
+
+# Download a match
 python grid_client.py <SERIES_ID>
+```
+*Skip this step if using the included `real_match.jsonl` sample data.*
 
-# 3. Process kill data
+### Step 3: Process Kill Data ⚠️ REQUIRED
+```bash
 python process_kills.py
+```
+This parses `real_match.jsonl` → `data/kills_data.csv`
 
-# 4. Launch the app
+**You must run this before launching the app!**
+
+### Step 4: Launch the Dashboard
+```bash
 streamlit run app.py
+```
+
+### Adding More Matches
+```bash
+python process_kills.py <input.jsonl> matches/<match_name>.csv
+```
+Example:
+```bash
+python process_kills.py game2.jsonl matches/VCT_Game2.csv
 ```
 
 ---
 
-## 📈 Sample Insights Generated
+## Sample Insights Generated
 
 ### Critical Impact Analysis
 ```

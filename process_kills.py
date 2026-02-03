@@ -107,7 +107,7 @@ def extract_kills(filepath: str, map_name: str = 'Unknown') -> Generator[Tuple, 
         for event in events:
             event_type = event.get('type')
 
-            # Track round changes
+            # Track round changes from round-started events
             if event_type == 'round-started':
                 try:
                     current_round = event.get('target', {}).get('state', {}).get('roundNumber', current_round + 1)
@@ -115,8 +115,37 @@ def extract_kills(filepath: str, map_name: str = 'Unknown') -> Generator[Tuple, 
                     current_round += 1
                 round_first_blood[current_round] = False
 
+            # Also detect round from game-started-round events
+            elif event_type == 'game-started-round':
+                try:
+                    current_round = event.get('target', {}).get('state', {}).get('sequenceNumber', current_round + 1)
+                except (KeyError, TypeError):
+                    current_round += 1
+                round_first_blood[current_round] = False
+
             # Process kills
             elif event_type == 'player-killed-player':
+                # Try to extract round number from seriesState segments
+                event_round = current_round
+                try:
+                    series_state = event.get('seriesState', {})
+                    games = series_state.get('games', [])
+                    if games:
+                        segments = games[0].get('segments', [])
+                        if segments:
+                            # Get the last segment (current round)
+                            last_seg = segments[-1]
+                            seg_id = last_seg.get('id', '')
+                            # Parse round number from segment id like "round-1", "round-2"
+                            if seg_id.startswith('round-'):
+                                event_round = int(seg_id.split('-')[1])
+                except (KeyError, TypeError, ValueError, IndexError):
+                    pass
+
+                # Update current_round if we got a valid one from the event
+                if event_round > 0:
+                    current_round = event_round
+
                 # Extract killer info - try multiple paths
                 k_name, k_x, k_y, k_agent = "Unknown", None, None, "Unknown"
                 try:
@@ -144,7 +173,7 @@ def extract_kills(filepath: str, map_name: str = 'Unknown') -> Generator[Tuple, 
                 # Extract weapon info
                 weapon, headshot = extract_weapon_info(event)
 
-                # Determine first blood
+                # Determine first blood per round
                 is_first_blood = not round_first_blood.get(current_round, False)
                 if is_first_blood:
                     round_first_blood[current_round] = True

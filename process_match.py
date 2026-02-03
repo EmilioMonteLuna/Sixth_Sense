@@ -8,7 +8,7 @@ OUTPUT_FILE = 'data/match_data.csv'
 
 
 def extract_player_positions():
-    print(f"🚀 Processing {INPUT_FILE}...")
+    print(f" Processing {INPUT_FILE}...")
 
     if not os.path.exists(INPUT_FILE):
         print("❌ Error: File not found.")
@@ -82,10 +82,10 @@ def extract_player_positions():
                 print(f"   Processed {line_num} lines... Found {count} positions so far.")
 
         if found_positions:
-            print(f"\n🎉 SUCCESS! Extracted {count} player positions.")
-            print(f"💾 Saved to: {OUTPUT_FILE}")
+            print(f"\n SUCCESS! Extracted {count} player positions.")
+            print(f" Saved to: {OUTPUT_FILE}")
         else:
-            print("\n❌ WARNING: Processed file but found NO player coordinates.")
+            print("\n WARNING: Processed file but found NO player coordinates.")
             print("The structure might be different. We may need to look for 'payload' or other keys.")
 
 

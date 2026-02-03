@@ -238,7 +238,7 @@ def extract_player_info(game_state: dict) -> Tuple[str, Optional[float], Optiona
 def extract_weapon_info(event: dict) -> Tuple[str, bool]:
     """
     Extract weapon and headshot info from event.
-    Updated to handle multiple GRID API JSON structures.
+    Updated to handle GRID API JSON structures including weaponKills.
 
     Returns:
         (weapon_name, is_headshot)
@@ -246,7 +246,29 @@ def extract_weapon_info(event: dict) -> Tuple[str, bool]:
     weapon = "Unknown"
     headshot = False
 
-    # Try action field first
+    # Try to get weapon from actor's weaponKills (GRID format)
+    actor = event.get('actor', {})
+    actor_state = actor.get('state', {})
+
+    # Check round-level weaponKills first (most specific)
+    round_state = actor_state.get('round', {})
+    weapon_kills = round_state.get('weaponKills', {})
+    if weapon_kills and isinstance(weapon_kills, dict):
+        # Get the last weapon used (most recent kill)
+        weapons = list(weapon_kills.keys())
+        if weapons:
+            weapon = weapons[-1]  # Last weapon in the dict
+
+    # Fallback to game-level weaponKills
+    if weapon == "Unknown":
+        game_state = actor_state.get('game', {})
+        weapon_kills = game_state.get('weaponKills', {})
+        if weapon_kills and isinstance(weapon_kills, dict):
+            weapons = list(weapon_kills.keys())
+            if weapons:
+                weapon = weapons[-1]
+
+    # Try action field
     action = event.get('action', {})
     if isinstance(action, dict):
         # Try different weapon field names

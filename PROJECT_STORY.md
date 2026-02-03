@@ -1,7 +1,5 @@
 # Sixth Sense - Comprehensive Assistant Coach for VALORANT
 
-> **Elevator Pitch:** AI-powered spatial intelligence that transforms raw match data into actionable coaching insights—see where your team wins and loses fights, not just the numbers.
-
 ---
 
 ## Inspiration
@@ -22,25 +20,25 @@ Sixth Sense is a **Comprehensive Assistant Coach** application that analyzes VAL
 
 ### Core Features (Matching Hackathon Requirements):
 
-#### 1. 🎯 Personalized Player/Team Improvement Insights
-- **KAST Impact Analysis**: Identifies players whose early deaths cost the team rounds (e.g., "Team loses 78% of rounds when OXY dies without KAST")
+#### 1.  Personalized Player/Team Improvement Insights
+- **KAST Impact Analysis**: Identifies players whose early deaths cost the team rounds (e.g., "Team loses 78% of rounds when a key player dies without KAST")
 - **Death Trap Detection**: Uses DBSCAN machine learning to cluster death locations and identify recurring positioning mistakes
 - **K/D and Performance Metrics**: Per-player breakdowns with comparisons to team averages
 - **Weapon Proficiency Analysis**: Tracks which weapons each player excels with
 
-#### 2. 📋 Automated Macro Game Review
+#### 2.  Automated Macro Game Review
 - **Round-by-Round Analysis**: First blood impact, round winners, momentum shifts
 - **Strategic Pattern Detection**: Kill zones, vulnerable positions, team-wide errors
 - **Map-Specific Recommendations**: Contextual tips for Ascent, Bind, Split, and Abyss
 - **Data-Backed Recommendations**: Actionable insights prioritized by severity (Critical/High/Medium/Low)
 
-#### 3. 🔮 Predictive "What If" Analytics
+#### 3.  Predictive "What If" Analytics
 - **Scenario Modeling**: "What if we avoided Death Trap #1?" → Predicts potential rounds saved
 - **Opening Duel Impact**: "What if our most vulnerable player improved?" → Win probability changes
 - **Trade Efficiency Analysis**: Models the impact of always trading first blood deaths
 - **Confidence Scoring**: Each prediction includes a confidence level based on data quality
 
-#### 4. 🗺️ Visual Map Intelligence
+#### 4.  Visual Map Intelligence
 - **Auto-Calibrated Death Maps**: Machine learning-based coordinate alignment
 - **Kill Zone Visualization**: See exactly where successful engagements happen
 - **Interactive Filtering**: By player, map, round type, and more
@@ -77,20 +75,6 @@ Sixth Sense follows a modular data pipeline architecture:
 ### Key Technical Approach
 We use **pandas** for efficient vectorized operations instead of row-by-row processing:
 
-```python
-# Calculate engagement distance using vectorized operations
-kills_df['distance'] = np.sqrt(
-    (kills_df['killer_x'] - kills_df['victim_x'])**2 + 
-    (kills_df['killer_y'] - kills_df['victim_y'])**2
-)
-```
-
-The straight-line distance between killer and victim positions:
-
-\\( d = \sqrt{(x_k - x_v)^2 + (y_k - y_v)^2} \\)
-
-This metric helps analyze whether engagements trend toward close-range or long-range fights, which directly informs agent composition and strategy decisions.
-
 ## Challenges we ran into
 
 ### 1. Coordinate System Alignment
@@ -125,12 +109,12 @@ Dense engagement clusters can become noisy and unreadable. We addressed this thr
 
 ## Accomplishments that we're proud of
 
-✅ **End-to-end pipeline**: From raw GRID JSONL → processed CSV → visual map overlay  
-✅ **Production-ready structure**: Modular, testable, and maintainable codebase  
-✅ **Debugging infrastructure**: Custom validation tools that made iteration practical  
-✅ **Real spatial insights**: Turning coordinates into actionable coaching intelligence  
-✅ **Performance optimization**: Sub-second load times even with hundreds of kill events  
-✅ **JetBrains + Junie integration**: Leveraged AI assistance throughout development  
+ **End-to-end pipeline**: From raw GRID JSONL → processed CSV → visual map overlay  
+ **Production-ready structure**: Modular, testable, and maintainable codebase  
+ **Debugging infrastructure**: Custom validation tools that made iteration practical  
+ **Real spatial insights**: Turning coordinates into actionable coaching intelligence  
+ **Performance optimization**: Sub-second load times even with hundreds of kill events  
+ **JetBrains + Junie integration**: Leveraged AI assistance throughout development  
 
 ## What we learned
 
@@ -202,57 +186,10 @@ Dense engagement clusters can become noisy and unreadable. We addressed this thr
 
 ---
 
-## Try It Out
 
-### Links
-- **GitHub Repository**: [Add your GitHub URL here]
-- **Demo Video**: [Add your YouTube/Vimeo URL here]
-
-### Quick Start
-```bash
-# Clone the repository
-git clone [your-repo-url]
-cd Sixth_Sense
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Process match data (converts GRID JSONL to CSV)
-python process_kills.py
-
-# Run the Streamlit application
-streamlit run app.py
-```
+*Demo uses VCT match data from GRID API featuring pro teams.*
 
 ---
 
-## Project Media
-
-### Screenshots
-*[Add screenshots showing:]*
-- Death Map with clustered death traps highlighted
-- Kill Map showing successful engagement zones
-- Performance Analysis tab with K/D metrics
-- Macro Review with first blood analysis
-- Predictive Analytics "What If" scenarios
-- AI Coach Insights with Data → Insight format
-
-### Video Demo
-*[Your 3-minute demo video should demonstrate:]*
-1. Loading match data from GRID API
-2. Processing kills with `process_kills.py`
-3. Launching the Streamlit dashboard
-4. Death Map visualization with death trap clusters
-5. Performance Analysis for a specific player
-6. Macro Game Review with first blood patterns
-7. Predictive "What If" scenario analysis
-8. AI Coach Insights in the hackathon format
-
----
-
-**Sixth Sense transforms raw VALORANT match data into visual spatial intelligence—helping coaches spot patterns, identify hotspots, and turn post-match numbers into actionable strategic insights at a glance.**
-
----
-
-*Built for Sky's the Limit - Cloud9 x JetBrains Hackathon | Category 1: Comprehensive Assistant Coach*
+*Built for Sky's the Limit - Cloud9 x JetBrains Hackathon 2026 | Category 1: Comprehensive Assistant Coach*
 
